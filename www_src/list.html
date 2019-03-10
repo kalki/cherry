@@ -1,0 +1,236 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="javascript/datatables.min.css"/>
+<link rel="stylesheet" type="text/css" href="site.css">
+<script type="text/javascript" src="javascript/datatables.min.js"></script>
+</head>
+<body>
+<script>
+  var filter_container;
+  function failed(jqXHR, exception) {
+    var msg = '';
+    if (jqXHR.status === 0) {
+      msg = 'Not connect.\n Verify Network.';
+    } else if (jqXHR.status == 404) {
+      msg = 'Requested page not found. [404]';
+    } else if (jqXHR.status == 500) {
+      msg = 'Internal Server Error [500].';
+    } else if (exception === 'parsererror') {
+      msg = 'Requested JSON parse failed.';
+    } else if (exception === 'timeout') {
+      msg = 'Time out error.';
+    } else if (exception === 'abort') {
+      msg = 'Ajax request aborted.';
+    } else {
+      msg = 'Uncaught Error.\n' + jqXHR.responseText;
+    }
+    console.log(msg);
+  }
+
+  function init_filter() {
+    var filter_container = $('<span class="filter_box"><span>').appendTo($('#main_filter'));
+    this.api().columns([9,10]).every( function () {
+      var column = this;
+      var select = $('<select><option value=""></option></select>').appendTo(filter_container)
+        .on('change', function () {
+          var val = $.fn.dataTable.util.escapeRegex(
+            $(this).val()
+          );
+          column.search( val ? '^'+val+'$' : '', true, false ).draw();
+        });
+      column.data().unique().sort().each( function ( d, j ) {
+        select.append( '<option value="'+d+'">'+d+'</option>' );
+      });
+    });
+  }
+  
+  function loaded(data, textStatus, jqXHR) {
+    tableName= '#main',
+    columns = data;
+
+    img_index = 0;
+    addr_index = 0;
+    exp_index = 0;
+    night_index = 0;
+    event_index = 0;
+    lon_index = 0;
+    lat_index = 0;
+    sf_index = 0;
+    cf_index = 0;
+    wfr_index = 0;
+    wwr_index = 0;
+    trr_index = 0;
+    tar_index = 0;
+    tt_index = 0;
+
+    for (var i = 0; i < columns.length; i++) {
+      if (columns[i].name == "image_url") {
+        img_index = i;
+      }
+      if (columns[i].name == "addr") {
+        addr_index = i;
+      }
+      if (columns[i].name == "exp") {
+        exp_index = i;
+      }
+      if (columns[i].name == "night") {
+        night_index = i;
+      }
+      if (columns[i].name == "event") {
+        event_index = i;
+      }
+      if (columns[i].name == "lat") {
+        lat_index = i;
+      }
+      if (columns[i].name == "lon") {
+        lon_index = i;
+      }
+      if (columns[i].name == "sakura_famous") {
+        sf_index = i;
+      }
+      if (columns[i].name == "country_famous") {
+        cf_index = i;
+      }
+      if (columns[i].name == "w_frank") {
+        wfr_index = i;
+      }
+      if (columns[i].name == "w_wrank") {
+        wwr_index = i;
+      }
+      if (columns[i].name == "t_rrank") {
+        trr_index = i;
+      }
+      if (columns[i].name == "t_arank") {
+        tar_index = i;
+      }
+      if (columns[i].name == "transit_time") {
+        tt_index = i;
+      }
+    }
+    
+    for (var i = 0; i < columns.length; i++) {
+      if (columns[i].name == "site_url") {
+        columns[i].render = function(data, type, row, meta) {
+          return '<a href="http://tenki.jp' + data + '" target="_blank"><img width="75" height="75" src="' + row[img_index] + '"></img></a>';
+        }
+      }
+      if (columns[i].name == "sname") {
+        columns[i].render = function(data, type, row, meta) {
+          var str = '<p>';
+          str = str + '<span>' + data + '  </span>';
+          if ((row[sf_index] == 1)) {
+            str = str + '<span class="ftag" title="x">名所</span> '
+          } else if ((row[sf_index] == 2)) {
+            str = str + '<span class="ftag" title="x">名所百选</span> '
+          }
+          if ((row[cf_index] == 1)) {
+            str = str + '<span class="ftag" title="x">名胜</span> '
+          } else if ((row[cf_index] == 2)) {
+            str = str + '<span class="ftag" title="x">特别名胜</span> '
+          }
+          if (row[wfr_index] > 0) {
+            str = str + '<span class="tag" title="x">Walker人气第' + row[wfr_index] + '</span> '
+          }
+          if (row[wwr_index] > 0) {
+            str = str + '<span class="tag" title="x">Walker向往第' + row[wwr_index] + '</span> '
+          }
+          if (row[trr_index] > 0) {
+            str = str + '<span class="tag" title="x">Tenki人气区第' + row[trr_index] + '</span> '
+          }
+          if (row[tar_index] > 0) {
+            str = str + '<span class="tag" title="x">Tenki人气县第' + row[tar_index] + '</span> '
+          }
+          str = str + '</p>';
+          
+          str = str + '<p><span class="exp_info">' + row[exp_index] + '</span> <span class="addr_info">' + row[addr_index] + '<a href="https://map.yahoo.co.jp/maps?lat='+row[lat_index]+'&lon='+row[lon_index]+'&z=12" target="_blank"><img width="16" height="16" src="yahoo.ico"></img></a></span> ';
+          if (row[night_index].length > 0) {
+            str = str + '<span class="night_tag" title="' + row[night_index] + '">夜樱</span> ';
+          }
+          if (row[event_index].length > 0) {
+            str = str + '<span class="event_tag" title="' + row[event_index] + '">活动</span> '
+          }
+          str = str + '</p>';
+          return str;
+        }
+      }
+      if (columns[i].name.charAt(0) >= '0' && columns[i].name.charAt(0) <= '9') {
+        columns[i].render = function(data, type, row, meta) {
+          var str = '';
+          switch (data) {
+            case 'つぼみ':
+              str = str + '<div><img src="icon-0.png"></img>';
+              break;
+            case '咲き始め':
+              str = str + '<div><img src="icon-1.png"></img>';
+              break;
+            case '5分咲き':
+              str = str + '<div><img src="icon-2.png"></img>';
+              break;
+            case '7分咲き':
+              str = str + '<div><img src="icon-3.png"></img>';
+              break;
+            case '満開':
+              str = str + '<div><img src="icon-4.png"></img>';
+              break;
+            case '散り始め':
+              str = str + '<div><img src="icon-5.png"></img>';
+              break;
+            case '青葉':
+              str = str + '<div><img src="icon-6.png"></img>';
+              break;
+          }
+          str = str + '</div>'
+          return str;
+        }
+      }
+    }
+
+    $.each(columns, function (k, colObj) {
+      str = '<th class="header">' + colObj.name + '</th>';
+      $(str).appendTo(tableName+'>thead>tr');
+    });
+    
+    $(tableName).dataTable({
+      "ajax": '/cherry/data/sites/full',
+      "columns": columns,
+      "lengthMenu" : [50, 100, 200, 500],
+      "pageLength" : 50,
+      "language": {
+        "sProcessing":   "处理中...",
+        "sLengthMenu":   "显示 _MENU_ 项结果",
+        "sZeroRecords":  "没有匹配结果",
+        "sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+        "sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+        "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+        "sInfoPostFix":  "",
+        "sSearch":       "搜索:",
+        "sUrl":          "",
+        "sEmptyTable":     "表中数据为空",
+        "sLoadingRecords": "载入中...",
+        "sInfoThousands":  ",",
+        "oPaginate": {
+          "sFirst":    "首页",
+          "sPrevious": "上页",
+          "sNext":     "下页",
+          "sLast":     "末页"
+        },
+        "oAria": {
+          "sSortAscending":  ": 以升序排列此列",
+          "sSortDescending": ": 以降序排列此列"
+        }
+      },
+      initComplete : init_filter,
+    });
+  }
+
+  $(document).ready(function() {
+    $.ajax('/cherry/header/sites/full').done(loaded).fail(failed);
+  });
+</script>
+<table id="main" class="display" style="width:100%">
+  <thead><tr></tr></thead>
+  <tbody></tbody>
+  <tfoot><tr></tr></tfoot>
+</table>
+</body>
+</html>
